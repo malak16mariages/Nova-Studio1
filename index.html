@@ -58,6 +58,7 @@ margin-bottom:20px;
 
 textarea{
 width:100%;
+height:110px;
 padding:12px;
 border-radius:10px;
 border:none;
@@ -135,52 +136,104 @@ text-align:center;
 margin-top:10px;
 color:#00f5ff;
 }
+
+.preview{
+width:100%;
+margin-top:15px;
+border-radius:15px;
+display:none;
+box-shadow:0 0 20px rgba(0,255,255,0.2);
+}
+
+.small{
+font-size:12px;
+opacity:0.7;
+margin-top:5px;
+}
 </style></head><body><header>
 <h1>⚡ Nova Studio</h1>
-<p>AI Game Design & Modern Graphics Generator</p>
+<p>AI Game Design & Free PRO Image Generator</p>
 </header><div class="navbar">
 <a href="#ai">AI Generator</a>
-<a href="#gallery">Gallery</a>
+<a href="#gallerySection">Gallery</a>
 <a href="https://t.me/onlyahmed27" target="_blank">Telegram</a>
-</div><div class="container"><div class="ai-box" id="ai">
-<h2>🎮 صمم صورتك بالذكاء الاصطناعي</h2>
-<p>اكتب وصف الصورة وسيتم توليدها مباشرة بأسلوب ألعاب احترافي</p><textarea id="prompt" placeholder="مثال: محارب فضاء في عالم cyberpunk بإضاءة نيون"></textarea><button onclick="generateImage()">إنشاء الصورة</button>
+</div><div class="container"><div class="ai-box">
+<h2>🎮 توليد صور احترافي مجاني (PRO Free)</h2>
+<p class="small">اكتب وصف دقيق وسنحاول توليد أفضل نتيجة ممكنة مع أكثر من سيرفر</p><textarea id="prompt" placeholder="مثال: محارب فضائي في مدينة نيون مع درع طاقي"></textarea><button id="genBtn" onclick="generateImage()">🚀 توليد الصورة</button>
 
-<div class="loading" id="loading">جاري إنشاء الصورة...</div><img id="result" style="width:100%;margin-top:15px;border-radius:15px;display:none;" />
-</div><h2 id="gallery">🔥 معرض التصاميم</h2>
-<div class="grid">
-<div class="card"><img src="https://picsum.photos/400/300?1"><p>Cyber Warrior</p></div>
-<div class="card"><img src="https://picsum.photos/400/300?2"><p>Neon City</p></div>
-<div class="card"><img src="https://picsum.photos/400/300?3"><p>Game Logo</p></div>
-<div class="card"><img src="https://picsum.photos/400/300?4"><p>AI Art</p></div>
-</div></div><footer>
+<div class="loading" id="loading">⏳ جاري توليد صورة احترافية...</div><img id="result" class="preview" />
+</div><h2 id="gallerySection">🔥 معرض التصاميم</h2>
+<div class="grid" id="galleryGrid"></div></div><footer>
 Nova Studio © 2026 | للتواصل: <span class="telegram">@onlyahmed27</span>
 </footer><script>
+
+const endpoints = [
+  "https://image.pollinations.ai/prompt/",
+  "https://pollinations.ai/prompt/"
+];
+
+function enhancePrompt(p){
+  return "ultra detailed, 4k, cyberpunk game style, highly realistic, cinematic lighting, " + p;
+}
+
 async function generateImage(){
-let prompt=document.getElementById('prompt').value;
+let prompt=document.getElementById('prompt').value.trim();
 let loading=document.getElementById('loading');
 let result=document.getElementById('result');
+let btn=document.getElementById('genBtn');
 
 if(!prompt){
-alert('اكتب وصف الصورة');
+alert('اكتب وصف الصورة أولاً');
 return;
 }
 
+btn.disabled=true;
 loading.style.display='block';
 result.style.display='none';
 
-try{
-// توليد صور مجاني بدون API Key
-let url = "https://image.pollinations.ai/prompt/" + encodeURIComponent(prompt);
+let enhanced = enhancePrompt(prompt);
+let seed = Math.floor(Math.random()*999999);
 
-result.src = url;
-result.style.display = 'block';
+let success=false;
+let finalUrl="";
 
-}catch(e){
-alert('حدث خطأ أثناء توليد الصورة');
+for(let i=0;i<endpoints.length;i++){
+  try{
+    let url = endpoints[i] + encodeURIComponent(enhanced) + "?seed=" + seed;
+
+    await new Promise((resolve,reject)=>{
+      let img=new Image();
+      img.onload=()=>{finalUrl=url;success=true;resolve();};
+      img.onerror=()=>reject();
+      img.src=url;
+    });
+
+    if(success) break;
+
+  }catch(e){
+    continue;
+  }
 }
 
 loading.style.display='none';
+btn.disabled=false;
+
+if(success){
+result.src=finalUrl;
+result.style.display='block';
+addToGallery(finalUrl,prompt);
+}else{
+alert('فشل التوليد، حاول مرة أخرى');
 }
+}
+
+function addToGallery(url,prompt){
+let g=document.getElementById('galleryGrid');
+let card=document.createElement('div');
+card.className='card';
+card.innerHTML=`<img src="${url}"><p>${prompt}</p>`;
+g.prepend(card);
+}
+
 </script></body>
 </html>
